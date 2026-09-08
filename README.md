@@ -27,6 +27,7 @@ words, ready to be asked again.
 ## Install
 
 ```sh
+brew install --cask stefanahman/tap/mcp-defer
 go install github.com/stefanahman/mcp-defer@latest   # with Go 1.25
 ```
 
