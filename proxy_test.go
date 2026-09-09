@@ -589,9 +589,13 @@ func TestCLI(t *testing.T) {
 	if code := run([]string{}, &out, &errOut); code != 64 || !strings.Contains(errOut.String(), "usage:") {
 		t.Errorf("no command: exit %d, stderr %q", code, errOut.String())
 	}
-	out.Reset()
-	if code := run([]string{"-version"}, &out, &errOut); code != 0 || strings.TrimSpace(out.String()) == "" {
-		t.Errorf("-version: exit %d, stdout %q", code, out.String())
+	// The version prints the program's name before it, as owl and
+	// spaces do, and answers to the flag and to the bare word alike.
+	for _, args := range [][]string{{"-version"}, {"--version"}, {"version"}} {
+		out.Reset()
+		if code := run(args, &out, &errOut); code != 0 || !strings.HasPrefix(out.String(), "mcp-defer ") || strings.TrimSpace(out.String()) == "mcp-defer" {
+			t.Errorf("%v: exit %d, stdout %q", args, code, out.String())
+		}
 	}
 	if code := run([]string{"-bogus"}, &out, &errOut); code != 64 {
 		t.Errorf("unknown flag: exit %d, want 64", code)

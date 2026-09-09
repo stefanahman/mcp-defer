@@ -17,7 +17,10 @@ import (
 	"strings"
 )
 
-var version = "dev"
+// version is the release, set by the linker (see the Makefile and
+// .goreleaser.yaml). The empty sentinel is what owl and spaces use:
+// an unstamped build falls back to the module's own build info.
+var version = ""
 
 const usageText = `usage: mcp-defer [-name NAME] [-cache DIR] [--] COMMAND [ARG...]
 
@@ -27,7 +30,7 @@ answered from the cache recorded the last time COMMAND ran.
 
   -name NAME   cache entry to use (default: the base name of COMMAND)
   -cache DIR   cache directory (default: $XDG_CACHE_HOME/mcp-defer)
-  -version     print the version and exit
+  -version     print the version and exit (also: mcp-defer version)
 `
 
 func main() {
@@ -37,6 +40,12 @@ func main() {
 // run is the command line: it parses args and serves stdin/stdout.
 // stdout and stderr are parameters for the version and usage text.
 func run(args []string, stdout, stderr io.Writer) int {
+	// `mcp-defer version`, as owl and spaces spell it. Only as the sole
+	// argument: `mcp-defer -- version` still runs a server named version.
+	if len(args) == 1 && args[0] == "version" {
+		fmt.Fprintln(stdout, "mcp-defer", versionString())
+		return 0
+	}
 	fs := flag.NewFlagSet("mcp-defer", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	fs.Usage = func() { fmt.Fprint(stderr, usageText) }
@@ -47,7 +56,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 64
 	}
 	if *showVersion {
-		fmt.Fprintln(stdout, versionString())
+		fmt.Fprintln(stdout, "mcp-defer", versionString())
 		return 0
 	}
 	command := fs.Args()
@@ -81,11 +90,11 @@ func run(args []string, stdout, stderr io.Writer) int {
 }
 
 func versionString() string {
-	if version != "dev" {
+	if version != "" {
 		return version
 	}
 	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
 		return info.Main.Version
 	}
-	return version
+	return "dev"
 }
