@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Weekly, so a Go security release goes red here even when nobody
+  # pushes: govulncheck below reads the toolchain that ships.
+  schedule:
+    - cron: "17 6 * * 1"
 
 permissions:
   contents: read
@@ -34,9 +38,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # staticcheck 2026.2.1 cannot read go1.27.2's export data ("export
+      # data version 5 is greater than maximum supported version 4"), so
+      # it runs on the last Go it can. Back to go-version-file: go.mod with
+      # the staticcheck release that reads it.
       - uses: actions/setup-go@v7
         with:
-          go-version: stable
+          go-version: 1.27.1
       - run: go run honnef.co/go/tools/cmd/staticcheck@2026.2.1 ./...
+      # govulncheck judges the standard library by the Go it runs on, so
+      # it runs on the toolchain the release builds with. A Go security
+      # release turns this red; `go get toolchain@patch` and a tag fix it.
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
       - run: go run golang.org/x/vuln/cmd/govulncheck@v1.7.0 ./...
       - run: GOOS=windows go vet ./...   # the !unix fallback has to keep compiling
