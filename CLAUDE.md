@@ -32,7 +32,7 @@ there and both do something this machine's `make` does not:
 | job | what it adds |
 |---|---|
 | `go` (matrix: ubuntu **and** macos) | the same lint and test on both platforms, then `goreleaser check` on ubuntu — a broken `.goreleaser.yaml` fails CI here, not at tag time |
-| `analysis` (ubuntu, Go stable) | `staticcheck@2026.2.1`, `govulncheck@v1.7.0`, and `GOOS=windows go vet ./...` |
+| `analysis` (ubuntu) | `staticcheck@2026.2.1` on Go 1.27.1, the last it can read; `govulncheck@v1.7.0` on go.mod's toolchain, the Go releases build with; and `GOOS=windows go vet ./...` |
 
 That last step is the one that bites. `signal_unix.go` and
 `signal_other.go` are a build-tagged pair, and everything this machine
@@ -87,6 +87,13 @@ brew update && brew upgrade --cask mcp-defer
 /opt/homebrew/bin/mcp-defer --version                      # the cask is what other machines get
 make install BIN=~/.eden/bin                               # restamp: the checkout build predates the tag
 ```
+
+A Go security release is a release here too. The `toolchain` line in
+go.mod is the Go every build uses — CI, the release, `make install` —
+and govulncheck reads it, so CI goes red (weekly, if nobody pushes)
+when that Go has a fix mcp-defer needs. `go get toolchain@patch`, one commit
+`build: go1.X.Y — <the fix>`, and ship. Dependabot does not bump that
+line.
 
 Patch for fixes, minor for a new flag or a change in what the cache
 holds.
