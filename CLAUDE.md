@@ -32,7 +32,8 @@ there and both do something this machine's `make` does not:
 | job | what it adds |
 |---|---|
 | `go` (matrix: ubuntu **and** macos) | the same lint and test on both platforms, then `goreleaser check` on ubuntu — a broken `.goreleaser.yaml` fails CI here, not at tag time |
-| `analysis` (ubuntu) | `staticcheck@2026.2.1` on Go 1.27.1, the last it can read; `govulncheck@v1.7.0` on go.mod's toolchain, the Go releases build with; and `GOOS=windows go vet ./...` |
+| `analysis` (ubuntu) | `staticcheck@2026.2.1` on Go 1.27.1, the last it can read, and `GOOS=windows go vet ./...` |
+| `vulncheck` (ubuntu) | `govulncheck@v1.7.0` on go.mod's toolchain, the Go releases build with |
 
 That last step is the one that bites. `signal_unix.go` and
 `signal_other.go` are a build-tagged pair, and everything this machine
