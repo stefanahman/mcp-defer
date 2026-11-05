@@ -44,17 +44,13 @@ homebrew_casks:
     description: "Start MCP servers on their first tool call, not at session start"
     license: MIT
     binaries: [mcp-defer]
-    # Raw, not hooks.post.install: Homebrew deprecated the postflight
-    # stanza that hook writes, and warns on every install and upgrade
-    # ("Calling `postflight` is deprecated!"). Its replacement,
-    # postflight_steps, takes a declarative DSL rather than Ruby, which
-    # goreleaser cannot write yet (goreleaser/goreleaser#6873). The
-    # block lands at the top of the cask, out of Homebrew's stanza order,
-    # which only `brew style` minds. {{staged_path}} is Homebrew's token
-    # and goreleaser templates the cask once, so it is escaped once.
-    custom_block: |
-      postflight_steps do
-        on_macos do
-          run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ "{{staged_path}}" }}/mcp-defer"]
-        end
-      end
+    # Homebrew deprecated the postflight stanza and warns on every install
+    # and upgrade. install_steps (goreleaser v2.19 and later) writes its
+    # replacement, postflight_steps, in Homebrew's stanza order;
+    # .StagedPath renders Homebrew's {{staged_path}} token.
+    hooks:
+      post:
+        install_steps: |
+          on_macos do
+            run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ .StagedPath }}/mcp-defer"]
+          end
